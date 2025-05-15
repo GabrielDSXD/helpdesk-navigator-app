@@ -1,11 +1,11 @@
 
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import TicketList from '@/components/tickets/TicketList';
+import TicketDetail from '@/components/tickets/TicketDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
-const Index: React.FC = () => {
+const TicketView: React.FC = () => {
   const { user, loading } = useAuth();
 
   // Redirecionamento para login se não estiver autenticado
@@ -24,9 +24,9 @@ const Index: React.FC = () => {
 
   return (
     <MainLayout>
-      <TicketList />
+      <TicketDetail />
     </MainLayout>
   );
 };
 
-export default Index;
+export default TicketView;
