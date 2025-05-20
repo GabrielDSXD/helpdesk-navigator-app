@@ -21,7 +21,7 @@ import { ArrowLeft } from 'lucide-react';
 const NewTicketForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<TicketPriority>('MEDIUM');
+  const [priority, setPriority] = useState<TicketPriority>('medium');
   
   const { createTicket, loading } = useTickets();
   const { addNotification } = useNotifications();
@@ -98,10 +98,9 @@ const NewTicketForm: React.FC = () => {
                   <SelectValue placeholder="Selecione a prioridade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOW">Baixa</SelectItem>
-                  <SelectItem value="MEDIUM">Média</SelectItem>
-                  <SelectItem value="HIGH">Alta</SelectItem>
-                  <SelectItem value="URGENT">Urgente</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,30 +1,32 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { TicketStatus, TicketPriority } from '@/types';
 
 const TicketList: React.FC = () => {
-  const { tickets } = useTickets();
+  const { tickets, fetchTickets, loading } = useTickets();
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
-  // Filtrar tickets com base no tipo de usuário
-  const filteredTickets = isAdmin 
-    ? tickets 
-    : tickets.filter(ticket => ticket.userId === user?.id);
+  useEffect(() => {
+    if (user) {
+      fetchTickets();
+    }
+  }, [user]);
 
   // Função para exibir o status do ticket
   const renderStatusBadge = (status: string) => {
     switch (status) {
-      case 'NEW':
+      case 'new':
         return <Badge className="bg-ticket-new">Novo</Badge>;
-      case 'OPEN':
+      case 'open':
         return <Badge className="bg-ticket-open">Aberto</Badge>;
-      case 'CLOSED':
+      case 'closed':
         return <Badge className="bg-ticket-closed">Fechado</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
@@ -34,18 +36,24 @@ const TicketList: React.FC = () => {
   // Função para exibir a prioridade do ticket
   const renderPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'LOW':
+      case 'low':
         return <Badge variant="outline" className="border-blue-300 text-blue-700">Baixa</Badge>;
-      case 'MEDIUM':
+      case 'medium':
         return <Badge variant="outline" className="border-green-300 text-green-700">Média</Badge>;
-      case 'HIGH':
+      case 'high':
         return <Badge variant="outline" className="border-orange-300 text-orange-700">Alta</Badge>;
-      case 'URGENT':
-        return <Badge className="bg-ticket-urgent">Urgente</Badge>;
       default:
         return <Badge variant="outline">Desconhecida</Badge>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-lg">Carregando tickets...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -58,7 +66,7 @@ const TicketList: React.FC = () => {
         </Button>
       </div>
 
-      {filteredTickets.length === 0 ? (
+      {tickets.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-lg text-gray-500">Não há tickets para exibir</p>
           <Button 
@@ -70,7 +78,7 @@ const TicketList: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {filteredTickets.map((ticket) => (
+          {tickets.map((ticket) => (
             <Card key={ticket.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardContent className="p-0">
                 <div 
@@ -89,7 +97,7 @@ const TicketList: React.FC = () => {
                   
                   <div className="flex justify-between items-center text-xs text-gray-500">
                     <div>
-                      {ticket.responses.length > 0 ? (
+                      {ticket.responses?.length ? (
                         <span>{ticket.responses.length} resposta(s)</span>
                       ) : (
                         <span>Sem respostas</span>

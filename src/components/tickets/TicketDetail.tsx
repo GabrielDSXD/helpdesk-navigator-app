@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTickets } from '@/contexts/TicketContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +11,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, MessageSquare, Check, X } from 'lucide-react';
+import { messageService } from '@/services/messageService';
+import { ticketService } from '@/services/ticketService';
+import { TicketResponse } from '@/types';
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getTicketById, assignTicket, addResponse, closeTicket, loading } = useTickets();
+  const { getTicketById, assignTicket, addResponse, closeTicket, loading, fetchTickets } = useTickets();
   const { user, isAdmin } = useAuth();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
@@ -22,8 +25,45 @@ const TicketDetail: React.FC = () => {
   const [responseContent, setResponseContent] = useState('');
   const [resolution, setResolution] = useState('');
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+  const [ticket, setTicket] = useState(getTicketById(id || ''));
+  const [messages, setMessages] = useState<TicketResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const ticket = getTicketById(id || '');
+  useEffect(() => {
+    if (id) {
+      loadTicketAndMessages();
+    }
+  }, [id]);
+
+  const loadTicketAndMessages = async () => {
+    if (!id) return;
+    
+    setIsLoading(true);
+    try {
+      // Refresh tickets first to get latest data
+      await fetchTickets();
+      const currentTicket = getTicketById(id);
+      setTicket(currentTicket);
+      
+      // Load messages for this ticket
+      if (currentTicket) {
+        const ticketMessages = await messageService.getTicketMessages(id);
+        setMessages(ticketMessages || []);
+      }
+    } catch (error) {
+      console.error("Failed to load ticket details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando detalhes do ticket...</p>
+      </div>
+    );
+  }
   
   if (!ticket) {
     return (
@@ -38,19 +78,19 @@ const TicketDetail: React.FC = () => {
   const canRespond = user?.id === ticket.userId || isAdmin;
   
   // Verificar se o usuário pode fechar o ticket (apenas administrador atribuído)
-  const canClose = isAdmin && ticket.assignedToId === user?.id && ticket.status === 'OPEN';
+  const canClose = isAdmin && ticket.adminId === user?.id && ticket.status === 'open';
   
   // Verificar se um admin pode assumir o ticket
-  const canAssign = isAdmin && ticket.status === 'NEW';
+  const canAssign = isAdmin && ticket.status === 'new';
   
   // Função para renderizar o badge de status
   const renderStatusBadge = (status: string) => {
     switch (status) {
-      case 'NEW':
+      case 'new':
         return <Badge className="bg-ticket-new">Novo</Badge>;
-      case 'OPEN':
+      case 'open':
         return <Badge className="bg-ticket-open">Aberto</Badge>;
-      case 'CLOSED':
+      case 'closed':
         return <Badge className="bg-ticket-closed">Fechado</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
@@ -60,14 +100,12 @@ const TicketDetail: React.FC = () => {
   // Função para renderizar o badge de prioridade
   const renderPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'LOW':
+      case 'low':
         return <Badge variant="outline" className="border-blue-300 text-blue-700">Baixa</Badge>;
-      case 'MEDIUM':
+      case 'medium':
         return <Badge variant="outline" className="border-green-300 text-green-700">Média</Badge>;
-      case 'HIGH':
+      case 'high':
         return <Badge variant="outline" className="border-orange-300 text-orange-700">Alta</Badge>;
-      case 'URGENT':
-        return <Badge className="bg-ticket-urgent">Urgente</Badge>;
       default:
         return <Badge variant="outline">Desconhecida</Badge>;
     }
@@ -75,8 +113,8 @@ const TicketDetail: React.FC = () => {
   
   // Manipulador para assumir o ticket
   const handleAssign = async () => {
-    if (canAssign) {
-      await assignTicket(ticket.id);
+    if (canAssign && id) {
+      await assignTicket(id);
       
       // Adicionar notificação
       if (ticket.userId !== user?.id) {
@@ -85,13 +123,16 @@ const TicketDetail: React.FC = () => {
           ticket.id
         );
       }
+      
+      // Recarregar ticket após atualização
+      loadTicketAndMessages();
     }
   };
   
   // Manipulador para adicionar resposta
   const handleAddResponse = async () => {
-    if (responseContent.trim() && canRespond) {
-      await addResponse(ticket.id, responseContent);
+    if (responseContent.trim() && canRespond && id) {
+      await addResponse(id, responseContent);
       setResponseContent('');
       
       // Adicionar notificação se for um administrador respondendo ao usuário
@@ -103,19 +144,22 @@ const TicketDetail: React.FC = () => {
       }
       
       // Adicionar notificação se for usuário respondendo (para administradores)
-      if (!isAdmin && ticket.assignedToId) {
+      if (!isAdmin && ticket.adminId) {
         addNotification(
           `Nova resposta do usuário no ticket "${ticket.title}"`,
           ticket.id
         );
       }
+      
+      // Recarregar mensagens após adicionar resposta
+      loadTicketAndMessages();
     }
   };
   
   // Manipulador para fechar ticket
   const handleCloseTicket = async () => {
-    if (resolution.trim() && canClose) {
-      await closeTicket(ticket.id, resolution);
+    if (resolution.trim() && canClose && id) {
+      await closeTicket(id, resolution);
       setIsCloseDialogOpen(false);
       
       // Adicionar notificação para o usuário
@@ -125,6 +169,9 @@ const TicketDetail: React.FC = () => {
           ticket.id
         );
       }
+      
+      // Recarregar ticket após fechar
+      loadTicketAndMessages();
     }
   };
   
@@ -171,11 +218,11 @@ const TicketDetail: React.FC = () => {
             </div>
           </div>
           <div className="text-sm text-gray-500 mt-1">
-            Criado por {ticket.user?.name} em {new Date(ticket.createdAt).toLocaleString('pt-BR')}
+            Criado em {new Date(ticket.createdAt).toLocaleString('pt-BR')}
           </div>
-          {ticket.assignedTo && (
+          {ticket.adminId && (
             <div className="text-sm text-gray-500">
-              Atribuído a {ticket.assignedTo.name}
+              Atribuído a um administrador
             </div>
           )}
         </CardHeader>
@@ -187,33 +234,38 @@ const TicketDetail: React.FC = () => {
       <div>
         <h3 className="text-xl font-medium mb-4 flex items-center">
           <MessageSquare className="h-5 w-5 mr-2" />
-          Respostas ({ticket.responses.length})
+          Respostas ({messages.length})
         </h3>
         
-        {ticket.responses.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="text-gray-500 text-center py-10">
             Ainda não há respostas para este ticket.
           </div>
         ) : (
           <div className="space-y-4">
-            {ticket.responses.map((response) => (
-              <Card key={response.id}>
+            {messages.map((message) => (
+              <Card key={message.id}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
                     <div className="font-medium">
-                      {response.user?.name}
-                      {response.user?.id === ticket.userId ? (
-                        <Badge variant="outline" className="ml-2">Cliente</Badge>
+                      {message.userId === ticket.userId ? (
+                        <>
+                          Cliente
+                          <Badge variant="outline" className="ml-2">Cliente</Badge>
+                        </>
                       ) : (
-                        <Badge variant="default" className="ml-2">Admin</Badge>
+                        <>
+                          Admin
+                          <Badge variant="default" className="ml-2">Admin</Badge>
+                        </>
                       )}
                     </div>
                     <span className="text-sm text-gray-500">
-                      {new Date(response.createdAt).toLocaleString('pt-BR')}
+                      {new Date(message.createdAt).toLocaleString('pt-BR')}
                     </span>
                   </div>
                   <p className="mt-2 whitespace-pre-wrap">
-                    {response.content}
+                    {message.content}
                   </p>
                 </CardContent>
               </Card>
@@ -221,7 +273,7 @@ const TicketDetail: React.FC = () => {
           </div>
         )}
         
-        {ticket.status !== 'CLOSED' && canRespond && (
+        {ticket.status !== 'closed' && canRespond && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-lg">Adicionar Resposta</CardTitle>

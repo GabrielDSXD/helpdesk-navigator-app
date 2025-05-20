@@ -1,15 +1,18 @@
 
-export type UserRole = 'USER' | 'ADMIN';
+export type UserRole = 'user' | 'admin';
 
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: UserRole;
+  sector?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type TicketStatus = 'NEW' | 'OPEN' | 'CLOSED';
-export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TicketStatus = 'new' | 'open' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high';
 
 export interface Ticket {
   id: string;
@@ -17,29 +20,30 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: TicketPriority;
-  createdAt: Date;
-  updatedAt: Date;
   userId: string;
+  adminId?: string;
+  createdAt: string;
+  updatedAt: string;
   user?: User;
-  assignedToId?: string;
   assignedTo?: User;
-  responses: TicketResponse[];
+  responses?: TicketResponse[];
 }
 
 export interface TicketResponse {
   id: string;
   content: string;
-  createdAt: Date;
   userId: string;
-  user?: User;
   ticketId: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: User;
 }
 
 export interface Notification {
   id: string;
   message: string;
   read: boolean;
-  createdAt: Date;
+  createdAt: string;
   userId: string;
   ticketId?: string;
 }

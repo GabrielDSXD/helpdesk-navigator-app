@@ -13,6 +13,7 @@ const RegisterForm: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [sector, setSector] = useState('');
   const [error, setError] = useState('');
   const { register, loading } = useAuth();
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const RegisterForm: React.FC = () => {
     setError('');
     
     try {
-      await register(name, email, password);
+      await register(name, email, password, sector);
       toast({
         title: "Registro bem-sucedido",
         description: "Sua conta foi criada com sucesso.",
@@ -76,6 +77,17 @@ const RegisterForm: React.FC = () => {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="sector">Setor/Departamento</Label>
+              <Input
+                id="sector"
+                placeholder="Seu setor ou departamento"
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
@@ -92,7 +104,7 @@ const RegisterForm: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={loading || !name || !email || !password}
+                disabled={loading || !name || !email || !password || !sector}
               >
                 {loading ? 'Registrando...' : 'Registrar'}
               </Button>

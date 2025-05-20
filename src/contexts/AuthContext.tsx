@@ -1,12 +1,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
+import { authService } from '@/services/authService';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, sector: string) => Promise<void>;
   logout: () => void;
   isAdmin: boolean;
 }
@@ -24,61 +26,77 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Em uma aplicação real, verificaríamos o token JWT e buscaríamos os dados do usuário
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const loadUser = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch user profile from API
+        const userData = await authService.getProfile();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error loading user:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
   }, []);
 
-  // Mock de autenticação para demonstração
   const login = async (email: string, password: string) => {
-    // Simulando uma chamada API
     setLoading(true);
     try {
-      // Em um app real, este seria um fetch para seu backend
-      await new Promise(r => setTimeout(r, 1000));
+      await authService.login({ email, password });
+      const userData = await authService.getProfile();
+      setUser(userData);
       
-      // Mock de usuário para demonstração
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        role: email.includes('admin') ? 'ADMIN' : 'USER',
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      toast({
+        title: "Login realizado com sucesso",
+        description: `Bem-vindo(a) de volta, ${userData.name}!`
+      });
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        title: "Erro no login",
+        description: "Email ou senha inválidos.",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    // Simulando uma chamada API
+  const register = async (name: string, email: string, password: string, sector: string) => {
     setLoading(true);
     try {
-      // Em um app real, este seria um fetch para seu backend
-      await new Promise(r => setTimeout(r, 1000));
+      await authService.register({ name, email, password, sector });
       
-      // Mock de usuário para demonstração
-      const mockUser: User = {
-        id: '1',
-        email,
-        name,
-        role: 'USER',
-      };
+      // Login after registration
+      await authService.login({ email, password });
+      const userData = await authService.getProfile();
+      setUser(userData);
       
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      toast({
+        title: "Registro realizado com sucesso",
+        description: "Sua conta foi criada com sucesso."
+      });
     } catch (error) {
       console.error('Registration failed:', error);
+      toast({
+        title: "Erro no registro",
+        description: "Não foi possível criar sua conta. Verifique seus dados.",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
@@ -86,11 +104,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   const logout = () => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem('user');
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso."
+    });
   };
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'admin';
   
   return (
     <AuthContext.Provider
