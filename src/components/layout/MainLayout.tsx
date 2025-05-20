@@ -1,10 +1,9 @@
-
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { useNavigate } from 'react-router-dom';
-import { Bell, LogOut, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { useNavigate } from "react-router-dom";
+import { Bell, LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +11,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import logo from "@/../public/logo icone.svg";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -27,19 +27,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // Função para obter as iniciais do nome do usuário
   const getUserInitials = () => {
     if (user && user.name) {
-      const nameParts = user.name.split(' ');
+      const nameParts = user.name.split(" ");
       if (nameParts.length > 1) {
         return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
       }
       return user.name.substring(0, 2).toUpperCase();
     }
-    return 'UT'; // User Template
+    return "UT"; // User Template
   };
 
   return (
@@ -48,20 +48,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <div className="flex items-center">
-            <img 
-              src="/logo-color.png" 
-              alt="Logo" 
-              className="h-8 mr-3 cursor-pointer" 
-              onClick={() => navigate('/')}
-            />
-            <h1 
-              className="text-xl font-bold text-primary cursor-pointer" 
-              onClick={() => navigate('/')}
+            <div className="w-[3.25rem] items-center justify-center flex bg-blue-950 rounded-full p-2 mr-4">
+              <img src={logo} alt="Logo" className="h-9 w-auto" />
+            </div>
+            <h1
+              className="text-xl font-bold text-primary cursor-pointer"
+              onClick={() => navigate("/")}
             >
               Sistema de Tickets
             </h1>
           </div>
-          
+
           {user && (
             <div className="flex items-center space-x-4">
               {/* Notificações - Apenas para admins */}
@@ -79,9 +76,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <DropdownMenuLabel className="flex justify-between items-center">
                       Notificações
                       {unreadCount > 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={markAllAsRead}
                           className="text-xs text-primary hover:text-primary/80"
                         >
@@ -96,21 +93,37 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       </div>
                     ) : (
                       notifications.slice(0, 5).map((notification) => (
-                        <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3">
+                        <DropdownMenuItem
+                          key={notification.id}
+                          className="flex flex-col items-start p-3"
+                        >
                           <div className="flex items-center justify-between w-full">
                             <span className="font-medium">
-                              {notification.ticketId ? `Ticket #${notification.ticketId.substring(0, 5)}` : 'Sistema'}
+                              {notification.ticketId
+                                ? `Ticket #${notification.ticketId.substring(
+                                    0,
+                                    5
+                                  )}`
+                                : "Sistema"}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {new Date(notification.createdAt).toLocaleString('pt-BR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {new Date(notification.createdAt).toLocaleString(
+                                "pt-BR",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {notification.message}
+                          </p>
                           {!notification.read && (
-                            <Badge variant="secondary" className="mt-1 bg-focus/20 text-focus">
+                            <Badge
+                              variant="secondary"
+                              className="mt-1 bg-focus/20 text-focus"
+                            >
                               Nova
                             </Badge>
                           )}
@@ -118,16 +131,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       ))
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="justify-center text-sm font-medium"
-                      onClick={() => navigate('/notifications')}
+                      onClick={() => navigate("/notifications")}
                     >
                       Ver todas
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-              
+
               {/* Menu do usuário */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -149,12 +162,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <span className="text-sm text-gray-500">{user?.email}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Badge variant={isAdmin ? "default" : "outline"} className={isAdmin ? "bg-primary" : ""}>
-                      {isAdmin ? 'Admin' : 'Usuário'}
+                    <Badge
+                      variant={isAdmin ? "default" : "outline"}
+                      className={isAdmin ? "bg-primary" : ""}
+                    >
+                      {isAdmin ? "Admin" : "Usuário"}
                     </Badge>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-error hover:text-error/80">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-error hover:text-error/80"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     <span>Logout</span>
                   </DropdownMenuItem>
@@ -164,12 +183,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           )}
         </div>
       </header>
-      
+
       {/* Main content */}
       <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );

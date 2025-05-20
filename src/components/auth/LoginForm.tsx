@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
+import logo from "@/../public/inova vector.svg";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -43,6 +44,7 @@ const LoginForm: React.FC = () => {
     <div className="max-w-md mx-auto">
       <Card>
         <CardHeader>
+          <img src={logo} alt="Logo" className="h-24 mx-auto mb-4" />
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
             Entre com suas credenciais para acessar o sistema de tickets
