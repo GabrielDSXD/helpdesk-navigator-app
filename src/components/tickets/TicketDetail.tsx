@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, MessageSquare, Check, X } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Check, X, RefreshCw } from 'lucide-react';
 import { messageService } from '@/services/messageService';
 import { ticketService } from '@/services/ticketService';
-import { TicketResponse } from '@/types';
+import { TicketResponse, User } from '@/types';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,8 @@ const TicketDetail: React.FC = () => {
   const [ticket, setTicket] = useState(getTicketById(id || ''));
   const [messages, setMessages] = useState<TicketResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [messageUsers, setMessageUsers] = useState<Record<string, User>>({});
+  const [refreshing, setRefreshing] = useState(false);
   
   useEffect(() => {
     if (id) {
@@ -49,12 +52,34 @@ const TicketDetail: React.FC = () => {
       if (currentTicket) {
         const ticketMessages = await messageService.getTicketMessages(id);
         setMessages(ticketMessages || []);
+        
+        // Get user details for each message
+        const userIds = new Set<string>();
+        ticketMessages?.forEach(message => userIds.add(message.userId));
+        
+        // In a real app, you'd fetch user details here
+        // For now, we'll simulate with the data we have
+        const usersMap: Record<string, User> = {};
+        if (currentTicket.user) {
+          usersMap[currentTicket.userId] = currentTicket.user;
+        }
+        if (currentTicket.assignedTo) {
+          usersMap[currentTicket.adminId!] = currentTicket.assignedTo;
+        }
+        
+        setMessageUsers(usersMap);
       }
     } catch (error) {
       console.error("Failed to load ticket details:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadTicketAndMessages();
+    setRefreshing(false);
   };
   
   if (isLoading) {
@@ -175,6 +200,25 @@ const TicketDetail: React.FC = () => {
     }
   };
   
+  // Função para obter as iniciais do nome do usuário
+  const getUserInitials = (userId: string) => {
+    const userInfo = messageUsers[userId];
+    if (userInfo && userInfo.name) {
+      const nameParts = userInfo.name.split(' ');
+      if (nameParts.length > 1) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      }
+      return userInfo.name.substring(0, 2).toUpperCase();
+    }
+    return userId.substring(0, 2).toUpperCase();
+  };
+  
+  // Função para obter o nome do usuário
+  const getUserName = (userId: string) => {
+    const userInfo = messageUsers[userId];
+    return userInfo ? userInfo.name : userId === ticket.userId ? 'Cliente' : 'Administrador';
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -189,9 +233,22 @@ const TicketDetail: React.FC = () => {
         <h1 className="text-2xl font-bold flex-grow">
           Ticket #{ticket.id.substring(0, 5)}
         </h1>
+        <Button
+          variant="outline"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="mr-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <span className="ml-2">Atualizar</span>
+        </Button>
         <div className="flex gap-2">
           {canAssign && (
-            <Button onClick={handleAssign} disabled={loading}>
+            <Button 
+              onClick={handleAssign} 
+              disabled={loading}
+              className="bg-primary hover:bg-primary/80"
+            >
               Assumir Ticket
             </Button>
           )}
@@ -201,6 +258,7 @@ const TicketDetail: React.FC = () => {
               variant="destructive"
               onClick={() => setIsCloseDialogOpen(true)}
               disabled={loading}
+              className="bg-error hover:bg-error/80"
             >
               Fechar Ticket
             </Button>
@@ -247,24 +305,28 @@ const TicketDetail: React.FC = () => {
               <Card key={message.id}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="font-medium">
-                      {message.userId === ticket.userId ? (
-                        <>
-                          Cliente
-                          <Badge variant="outline" className="ml-2">Cliente</Badge>
-                        </>
-                      ) : (
-                        <>
-                          Admin
-                          <Badge variant="default" className="ml-2">Admin</Badge>
-                        </>
-                      )}
+                    <div className="flex items-center">
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarFallback className={message.userId === ticket.userId ? "bg-secondary" : "bg-primary text-primary-foreground"}>
+                          {getUserInitials(message.userId)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {getUserName(message.userId)}
+                          {message.userId === ticket.userId ? (
+                            <Badge variant="outline" className="ml-2 border-secondary-foreground">Cliente</Badge>
+                          ) : (
+                            <Badge variant="default" className="ml-2 bg-primary">Admin</Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <span className="text-sm text-gray-500">
                       {new Date(message.createdAt).toLocaleString('pt-BR')}
                     </span>
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap">
+                  <p className="mt-2 whitespace-pre-wrap pl-10">
                     {message.content}
                   </p>
                 </CardContent>
@@ -287,7 +349,11 @@ const TicketDetail: React.FC = () => {
               />
             </CardContent>
             <CardFooter className="flex justify-end">
-              <Button onClick={handleAddResponse} disabled={loading || !responseContent.trim()}>
+              <Button 
+                onClick={handleAddResponse} 
+                disabled={loading || !responseContent.trim()}
+                className="bg-primary hover:bg-primary/80"
+              >
                 Enviar Resposta
               </Button>
             </CardFooter>
@@ -322,6 +388,7 @@ const TicketDetail: React.FC = () => {
             <Button 
               onClick={handleCloseTicket}
               disabled={loading || !resolution.trim()}
+              className="bg-primary hover:bg-primary/80"
             >
               <Check className="h-4 w-4 mr-2" />
               Fechar Ticket

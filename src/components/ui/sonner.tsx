@@ -1,3 +1,4 @@
+
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, toast } from "sonner"
 
@@ -19,6 +20,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          success: "group-[.toast]:bg-success group-[.toast]:text-white",
+          error: "group-[.toast]:bg-error group-[.toast]:text-white",
+          info: "group-[.toast]:bg-focus group-[.toast]:text-white",
         },
       }}
       {...props}

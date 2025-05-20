@@ -5,17 +5,20 @@ import TicketDetail from '@/components/tickets/TicketDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useParams } from 'react-router-dom';
 import { useTickets } from '@/contexts/TicketContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 const TicketView: React.FC = () => {
   const { user, loading } = useAuth();
   const { id } = useParams<{ id: string }>();
   const { fetchTickets } = useTickets();
+  const { pollForNewNotifications } = useNotifications();
 
   useEffect(() => {
     if (user && id) {
       fetchTickets();
+      pollForNewNotifications();
     }
-  }, [user, id]);
+  }, [user, id, fetchTickets, pollForNewNotifications]);
 
   // Redirecionamento para login se não estiver autenticado
   if (!loading && !user) {

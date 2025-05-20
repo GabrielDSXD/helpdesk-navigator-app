@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -29,14 +30,32 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     navigate('/login');
   };
 
+  // Função para obter as iniciais do nome do usuário
+  const getUserInitials = () => {
+    if (user && user.name) {
+      const nameParts = user.name.split(' ');
+      if (nameParts.length > 1) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      }
+      return user.name.substring(0, 2).toUpperCase();
+    }
+    return 'UT'; // User Template
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-secondary">
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <div className="flex items-center">
+            <img 
+              src="/logo-color.png" 
+              alt="Logo" 
+              className="h-8 mr-3 cursor-pointer" 
+              onClick={() => navigate('/')}
+            />
             <h1 
-              className="text-xl font-bold text-gray-900 cursor-pointer" 
+              className="text-xl font-bold text-primary cursor-pointer" 
               onClick={() => navigate('/')}
             >
               Sistema de Tickets
@@ -52,7 +71,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <Button variant="ghost" size="icon" className="relative">
                       <Bell className="h-5 w-5" />
                       {unreadCount > 0 && (
-                        <span className="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span className="absolute top-0 right-0 inline-block w-2 h-2 bg-error rounded-full"></span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
@@ -64,7 +83,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                           variant="ghost" 
                           size="sm" 
                           onClick={markAllAsRead}
-                          className="text-xs"
+                          className="text-xs text-primary hover:text-primary/80"
                         >
                           Marcar todas como lidas
                         </Button>
@@ -91,7 +110,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                           </div>
                           <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                           {!notification.read && (
-                            <Badge variant="secondary" className="mt-1 bg-blue-100 text-blue-800">
+                            <Badge variant="secondary" className="mt-1 bg-focus/20 text-focus">
                               Nova
                             </Badge>
                           )}
@@ -112,26 +131,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {/* Menu do usuário */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar>
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <span className="font-medium">{user.name}</span>
+                    <span className="font-medium">{user?.name}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <span className="text-sm text-gray-500">{user.email}</span>
+                    <span className="text-sm text-gray-500">{user?.email}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Badge variant={isAdmin ? "default" : "outline"}>
+                    <Badge variant={isAdmin ? "default" : "outline"} className={isAdmin ? "bg-primary" : ""}>
                       {isAdmin ? 'Admin' : 'Usuário'}
                     </Badge>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} className="text-error hover:text-error/80">
                     <LogOut className="h-4 w-4 mr-2" />
                     <span>Logout</span>
                   </DropdownMenuItem>

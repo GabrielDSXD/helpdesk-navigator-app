@@ -1,8 +1,10 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Notification, User } from '@/types';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { BellRing } from 'lucide-react';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -11,6 +13,7 @@ interface NotificationContextType {
   addNotification: (message: string, ticketId?: string) => void;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
+  pollForNewNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -30,9 +33,33 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
-
+  const { toast: uiToast } = useToast();
+  
   const unreadCount = notifications.filter(n => !n.read).length;
+  
+  // Função para buscar notificações do servidor
+  const pollForNewNotifications = useCallback(() => {
+    if (!user) return;
+    
+    // Simulando a busca de novas notificações
+    // Em um cenário real, isso faria uma chamada à API
+    console.log("Polling for new notifications...");
+    
+    // Aqui você implementaria a lógica real para buscar notificações do servidor
+  }, [user]);
+  
+  // Configurar polling periódico de notificações
+  useEffect(() => {
+    if (!user) return;
+    
+    // Polling inicial
+    pollForNewNotifications();
+    
+    // Configurar intervalo para polling
+    const intervalId = setInterval(pollForNewNotifications, 30000); // a cada 30 segundos
+    
+    return () => clearInterval(intervalId);
+  }, [user, pollForNewNotifications]);
   
   // Adicionar uma nova notificação
   const addNotification = (message: string, ticketId?: string) => {
@@ -42,7 +69,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       id: generateId(),
       message,
       read: false,
-      createdAt: new Date().toISOString(), // Converting Date to string
+      createdAt: new Date().toISOString(),
       userId: user.id,
       ticketId
     };
@@ -50,10 +77,16 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     setNotifications(prev => [newNotification, ...prev]);
     
     // Mostrar uma toast para a notificação
-    if (user.role === 'admin') { // Changed from 'ADMIN' to 'admin' to match UserRole type
-      toast({
+    if (user.role === 'admin') {
+      uiToast({
         title: "Nova notificação",
         description: message,
+      });
+      
+      // Também mostrar uma notificação usando Sonner para maior visibilidade
+      toast.info(message, {
+        position: 'top-right',
+        icon: <BellRing className="h-4 w-4" />,
       });
     }
   };
@@ -84,7 +117,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         loading,
         addNotification,
         markAsRead,
-        markAllAsRead
+        markAllAsRead,
+        pollForNewNotifications
       }}
     >
       {children}

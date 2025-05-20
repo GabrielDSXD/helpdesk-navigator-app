@@ -69,6 +69,9 @@ export default {
 					closed: '#6B7280',
 					urgent: '#EF4444',
 				},
+				success: '#2E8B57',
+				error: '#F44336',
+				focus: '#3B82F6'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
