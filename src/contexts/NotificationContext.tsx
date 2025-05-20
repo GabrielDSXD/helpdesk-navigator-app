@@ -42,7 +42,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       id: generateId(),
       message,
       read: false,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(), // Converting Date to string
       userId: user.id,
       ticketId
     };
@@ -50,7 +50,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     setNotifications(prev => [newNotification, ...prev]);
     
     // Mostrar uma toast para a notificação
-    if (user.role === 'ADMIN') {
+    if (user.role === 'admin') { // Changed from 'ADMIN' to 'admin' to match UserRole type
       toast({
         title: "Nova notificação",
         description: message,
