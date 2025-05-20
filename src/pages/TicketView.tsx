@@ -15,10 +15,16 @@ const TicketView: React.FC = () => {
 
   useEffect(() => {
     if (user && id) {
+      // Load tickets once when the component mounts
       fetchTickets();
+      
+      // Poll for notifications once when the component mounts
       pollForNewNotifications();
+      
+      // We've moved the recurring polling to the TicketDetail component
+      // to have better control over the interval and avoid duplicate requests
     }
-  }, [user, id, fetchTickets, pollForNewNotifications]);
+  }, [user, id]);
 
   // Redirecionamento para login se não estiver autenticado
   if (!loading && !user) {

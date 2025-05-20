@@ -1,1 +1,88 @@
-/* Reset de estilos não mais necessários, agora usando Tailwind */
+
+/* Light and Dark Theme Variables */
+
+:root {
+  /* Light Theme (Default) */
+  --primary: 218 73% 20%; /* #0D2A5B */
+  --primary-foreground: 0 0% 97%; /* #F7F7F7 */
+  
+  --secondary: 210 50% 96%; /* #F1F4F7 */
+  --secondary-foreground: 218 15% 26%; /* #364152 */
+  
+  --background: 0 0% 97%; /* #F7F7F7 */
+  --foreground: 218 15% 26%; /* #364152 */
+  
+  --muted: 210 40% 93%; /* Lighter version of secondary */
+  --muted-foreground: 217 12% 40%; /* Lighter version of secondary-foreground */
+  
+  --accent: 217 91% 60%; /* #3B82F6 */
+  --accent-foreground: 0 0% 97%; /* #F7F7F7 */
+  
+  --destructive: 0 84% 60%; /* #F44336 */
+  --destructive-foreground: 0 0% 97%; /* #F7F7F7 */
+  
+  --card: 0 0% 100%; /* White */
+  --card-foreground: 218 15% 26%; /* #364152 */
+  
+  --popover: 0 0% 100%; /* White */
+  --popover-foreground: 218 15% 26%; /* #364152 */
+  
+  --border: 216 15% 86%; /* #D3D9E4 */
+  --input: 216 15% 86%; /* #D3D9E4 */
+  
+  --ring: 218 73% 20%; /* #0D2A5B */
+  
+  /* Sidebar specific colors */
+  --sidebar-background: 219 70% 14%; /* #0B1E3E */
+  --sidebar-foreground: 0 0% 97%; /* #F7F7F7 */
+  --sidebar-primary: 217 91% 60%; /* #2563EB */
+  --sidebar-primary-foreground: 0 0% 97%; /* #F7F7F7 */
+  --sidebar-accent: 210 100% 50%; /* Brighter accent */
+  --sidebar-accent-foreground: 0 0% 97%; /* #F7F7F7 */
+  --sidebar-border: 217 30% 25%; /* Darker border */
+  --sidebar-ring: 217 91% 60%; /* #2563EB */
+  
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Dark Theme */
+  --primary: 210 40% 96%; /* #F5F8FA */
+  --primary-foreground: 218 33% 18%; /* #1E293B */
+  
+  --secondary: 217 24% 23%; /* #2B364A */
+  --secondary-foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --background: 222 47% 11%; /* #111827 */
+  --foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --muted: 217 24% 18%; /* Darker version of secondary */
+  --muted-foreground: 210 20% 70%; /* Lighter text for muted areas */
+  
+  --accent: 217 91% 60%; /* #2563EB */
+  --accent-foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --destructive: 0 63% 35%; /* #991B1B */
+  --destructive-foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --card: 222 47% 13%; /* Slightly lighter than background */
+  --card-foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --popover: 222 47% 13%; /* Same as card */
+  --popover-foreground: 210 40% 96%; /* #F5F8FA */
+  
+  --border: 217 24% 23%; /* #2B364A */
+  --input: 217 24% 23%; /* #2B364A */
+  
+  --ring: 217 91% 60%; /* #2563EB */
+  
+  /* Sidebar specific colors for dark mode */
+  --sidebar-background: 220 19% 12%; /* #1A1E26 */
+  --sidebar-foreground: 210 40% 96%; /* #F5F8FA */
+  --sidebar-primary: 217 91% 60%; /* #2563EB */
+  --sidebar-primary-foreground: 210 40% 96%; /* #F5F8FA */
+  --sidebar-accent: 217 91% 60%; /* #2563EB */
+  --sidebar-accent-foreground: 210 40% 96%; /* #F5F8FA */
+  --sidebar-border: 217 24% 23%; /* #2B364A */
+  --sidebar-ring: 210 100% 86%; /* #BFDBFE */
+}

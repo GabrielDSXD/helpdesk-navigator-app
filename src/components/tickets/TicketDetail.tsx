@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTickets } from '@/contexts/TicketContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ import { messageService } from '@/services/messageService';
 import { ticketService } from '@/services/ticketService';
 import { TicketResponse, User } from '@/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,17 +32,32 @@ const TicketDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [messageUsers, setMessageUsers] = useState<Record<string, User>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const intervalRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (id) {
       loadTicketAndMessages();
+      
+      // Set up polling at a reasonable interval (every 10 seconds)
+      intervalRef.current = window.setInterval(() => {
+        loadTicketAndMessages(false);
+      }, 10000) as unknown as number;
     }
+    
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [id]);
 
-  const loadTicketAndMessages = async () => {
+  const loadTicketAndMessages = async (showLoading = true) => {
     if (!id) return;
     
-    setIsLoading(true);
+    if (showLoading) {
+      setIsLoading(true);
+    }
+    
     try {
       // Refresh tickets first to get latest data
       await fetchTickets();
@@ -54,25 +70,43 @@ const TicketDetail: React.FC = () => {
         setMessages(ticketMessages || []);
         
         // Get user details for each message
-        const userIds = new Set<string>();
-        ticketMessages?.forEach(message => userIds.add(message.userId));
-        
-        // In a real app, you'd fetch user details here
-        // For now, we'll simulate with the data we have
-        const usersMap: Record<string, User> = {};
-        if (currentTicket.user) {
-          usersMap[currentTicket.userId] = currentTicket.user;
+        if (ticketMessages && ticketMessages.length > 0) {
+          const userIds = new Set<string>();
+          ticketMessages.forEach(message => userIds.add(message.userId));
+          
+          // In a real app, you'd fetch user details here
+          // For now, we'll use the data we have
+          const usersMap: Record<string, User> = {};
+          
+          // Add ticket owner
+          if (currentTicket.user) {
+            usersMap[currentTicket.userId] = currentTicket.user;
+          }
+          
+          // Add admin if assigned
+          if (currentTicket.assignedTo) {
+            usersMap[currentTicket.adminId!] = currentTicket.assignedTo;
+          }
+          
+          // Try to extract user info from message.user if available
+          ticketMessages.forEach(message => {
+            if (message.user) {
+              usersMap[message.userId] = message.user;
+            }
+          });
+          
+          setMessageUsers(usersMap);
         }
-        if (currentTicket.assignedTo) {
-          usersMap[currentTicket.adminId!] = currentTicket.assignedTo;
-        }
-        
-        setMessageUsers(usersMap);
       }
     } catch (error) {
       console.error("Failed to load ticket details:", error);
+      if (showLoading) {
+        toast.error("Erro ao carregar detalhes do ticket");
+      }
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   };
   
@@ -216,7 +250,19 @@ const TicketDetail: React.FC = () => {
   // Função para obter o nome do usuário
   const getUserName = (userId: string) => {
     const userInfo = messageUsers[userId];
-    return userInfo ? userInfo.name : userId === ticket.userId ? 'Cliente' : 'Administrador';
+    if (userInfo && userInfo.name) {
+      return userInfo.name;
+    }
+    return userId === ticket.userId ? 'Cliente' : 'Administrador';
+  };
+  
+  // Função para obter o tipo de usuário (papel/role)
+  const getUserRole = (userId: string) => {
+    const userInfo = messageUsers[userId];
+    if (userInfo) {
+      return userInfo.role;
+    }
+    return userId === ticket.userId ? 'user' : 'admin';
   };
   
   return (
@@ -307,14 +353,14 @@ const TicketDetail: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex items-center">
                       <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback className={message.userId === ticket.userId ? "bg-secondary" : "bg-primary text-primary-foreground"}>
+                        <AvatarFallback className={getUserRole(message.userId) === 'user' ? "bg-secondary" : "bg-primary text-primary-foreground"}>
                           {getUserInitials(message.userId)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium">
                           {getUserName(message.userId)}
-                          {message.userId === ticket.userId ? (
+                          {getUserRole(message.userId) === 'user' ? (
                             <Badge variant="outline" className="ml-2 border-secondary-foreground">Cliente</Badge>
                           ) : (
                             <Badge variant="default" className="ml-2 bg-primary">Admin</Badge>

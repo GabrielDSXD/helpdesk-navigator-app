@@ -71,7 +71,30 @@ export default {
 				},
 				success: '#2E8B57',
 				error: '#F44336',
-				focus: '#3B82F6'
+				focus: '#3B82F6',
+                
+                // New colors for light/dark themes
+                light: {
+                    primary: '#0D2A5B', 
+                    background: '#F7F7F7',
+                    secondary: '#F1F4F7',
+                    text: '#364152',
+                    success: '#2E8B57',
+                    error: '#F44336',
+                    sidebar: '#0B1E3E',
+                    accent: '#3B82F6',
+                    border: '#D3D9E4',
+                },
+                dark: {
+                    primary: '#F5F8FA',
+                    background: '#111827',
+                    secondary: '#2B364A',
+                    text: '#1E293B',
+                    destructive: '#991B1B',
+                    sidebar: '#1A1E26',
+                    accent: '#2563EB',
+                    focus: '#BFDBFE',
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

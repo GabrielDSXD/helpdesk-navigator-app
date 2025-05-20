@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Notification, User } from '@/types';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -34,6 +34,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast: uiToast } = useToast();
+  const pollingIntervalRef = useRef<number | null>(null);
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
@@ -55,10 +56,20 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     // Polling inicial
     pollForNewNotifications();
     
-    // Configurar intervalo para polling
-    const intervalId = setInterval(pollForNewNotifications, 30000); // a cada 30 segundos
+    // Configurar intervalo para polling - a cada 30 segundos é suficiente
+    // Limpar qualquer intervalo existente antes de criar um novo
+    if (pollingIntervalRef.current !== null) {
+      clearInterval(pollingIntervalRef.current);
+    }
     
-    return () => clearInterval(intervalId);
+    pollingIntervalRef.current = window.setInterval(pollForNewNotifications, 30000) as unknown as number;
+    
+    return () => {
+      if (pollingIntervalRef.current !== null) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
   }, [user, pollForNewNotifications]);
   
   // Adicionar uma nova notificação
