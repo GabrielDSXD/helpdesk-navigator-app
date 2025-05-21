@@ -1,5 +1,4 @@
-
-export type UserRole = 'user' | 'admin';
+export type UserRole = "user" | "admin";
 
 export interface User {
   id: string;
@@ -11,8 +10,8 @@ export interface User {
   updatedAt: string;
 }
 
-export type TicketStatus = 'new' | 'open' | 'closed';
-export type TicketPriority = 'low' | 'medium' | 'high';
+export type TicketStatus = "new" | "open" | "closed";
+export type TicketPriority = "low" | "medium" | "high";
 
 export interface Ticket {
   id: string;
@@ -20,6 +19,7 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: TicketPriority;
+  messages_count: number;
   userId: string;
   adminId?: string;
   createdAt: string;

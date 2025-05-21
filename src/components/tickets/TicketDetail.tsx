@@ -382,21 +382,10 @@ const TicketDetail: React.FC = () => {
             {messages.map((message) => (
               <Card key={message.id}>
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start border-b pb-2">
                     <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback
-                          className={
-                            getUserRole(message.userId) === "user"
-                              ? "bg-secondary"
-                              : "bg-primary text-primary-foreground"
-                          }
-                        >
-                          {getUserInitials(message.userId)}
-                        </AvatarFallback>
-                      </Avatar>
                       <div>
-                        <div className="font-medium">
+                        <div className="font-medium capitalize">
                           {getUserName(message.userId)}
                           {getUserRole(message.userId) === "user" ? (
                             <Badge
@@ -420,7 +409,7 @@ const TicketDetail: React.FC = () => {
                       {new Date(message.createdAt).toLocaleString("pt-BR")}
                     </span>
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap pl-10">
+                  <p className="flex flex-row mt-2 whitespace-pre-wrap pl-0 text-wrap">
                     {message.content}
                   </p>
                 </CardContent>
