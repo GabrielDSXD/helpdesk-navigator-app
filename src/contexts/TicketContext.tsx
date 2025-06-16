@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Ticket, TicketStatus, TicketPriority, User, TicketResponse } from '@/types';
 import { useAuth } from './AuthContext';
@@ -14,6 +13,7 @@ interface TicketContextType {
   assignTicket: (ticketId: string) => Promise<void>;
   addResponse: (ticketId: string, content: string) => Promise<void>;
   closeTicket: (ticketId: string, resolution: string) => Promise<void>;
+  reopenTicket: (ticketId: string) => Promise<void>;
   fetchTickets: () => Promise<void>;
 }
 
@@ -113,13 +113,13 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await ticketService.assumeTicket(ticketId);
       
-      // Refresh tickets after assigning
-      await fetchTickets();
-      
       toast({
         title: "Ticket assumido",
         description: `Você agora é responsável pelo ticket #${ticketId.substring(0, 5)}`
       });
+      
+      // Recarregar a página para evitar problemas de cache
+      window.location.reload();
     } catch (error) {
       console.error('Error assigning ticket:', error);
       toast({
@@ -176,18 +176,47 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         resolution
       });
       
-      // Refresh tickets after closing
-      await fetchTickets();
-      
       toast({
         title: "Ticket fechado",
         description: `O ticket #${ticketId.substring(0, 5)} foi fechado com sucesso.`
       });
+      
+      // Recarregar a página para evitar problemas de cache
+      window.location.reload();
     } catch (error) {
       console.error('Error closing ticket:', error);
       toast({
         title: "Erro ao fechar ticket",
         description: "Não foi possível fechar o ticket. Tente novamente.",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reopen a closed ticket
+  const reopenTicket = async (ticketId: string) => {
+    if (!user) throw new Error('Você precisa estar logado');
+    if (!isAdmin) throw new Error('Apenas administradores podem reabrir tickets');
+    
+    setLoading(true);
+    try {
+      await ticketService.reopenTicket(ticketId);
+      
+      toast({
+        title: "Ticket reaberto",
+        description: `O ticket #${ticketId.substring(0, 5)} foi reaberto com sucesso.`
+      });
+      
+      // Recarregar a página para evitar problemas de cache
+      window.location.reload();
+    } catch (error) {
+      console.error('Error reopening ticket:', error);
+      toast({
+        title: "Erro ao reabrir ticket",
+        description: "Não foi possível reabrir o ticket. Tente novamente.",
         variant: "destructive"
       });
       throw error;
@@ -206,6 +235,7 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         assignTicket,
         addResponse,
         closeTicket,
+        reopenTicket,
         fetchTickets
       }}
     >

@@ -21,7 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MessageSquare, Check, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw } from "lucide-react";
 import { messageService } from "@/services/messageService";
 import { ticketService } from "@/services/ticketService";
 import { TicketResponse, User } from "@/types";
@@ -35,6 +35,7 @@ const TicketDetail: React.FC = () => {
     assignTicket,
     addResponse,
     closeTicket,
+    reopenTicket,
     loading,
     fetchTickets,
   } = useTickets();
@@ -164,6 +165,10 @@ const TicketDetail: React.FC = () => {
   const canClose =
     isAdmin && ticket.adminId === user?.id && ticket.status === "open";
 
+  // Verificar se o usuário pode reabrir o ticket (apenas administrador atribuído)
+  const canReopen =
+    isAdmin && ticket.adminId === user?.id && ticket.status === "closed";
+
   // Verificar se um admin pode assumir o ticket
   const canAssign = isAdmin && ticket.status === "new";
 
@@ -222,9 +227,6 @@ const TicketDetail: React.FC = () => {
           ticket.id
         );
       }
-
-      // Recarregar ticket após atualização
-      loadTicketAndMessages();
     }
   };
 
@@ -268,9 +270,21 @@ const TicketDetail: React.FC = () => {
           ticket.id
         );
       }
+    }
+  };
 
-      // Recarregar ticket após fechar
-      loadTicketAndMessages();
+  // Manipulador para reabrir ticket
+  const handleReopenTicket = async () => {
+    if (canReopen && id) {
+      await reopenTicket(id);
+
+      // Adicionar notificação para o usuário
+      if (ticket.userId !== user?.id) {
+        addNotification(
+          `Seu ticket "${ticket.title}" foi reaberto.`,
+          ticket.id
+        );
+      }
     }
   };
 
@@ -345,6 +359,17 @@ const TicketDetail: React.FC = () => {
               className="bg-error hover:bg-error/80"
             >
               Fechar Ticket
+            </Button>
+          )}
+
+          {canReopen && (
+            <Button
+              onClick={handleReopenTicket}
+              disabled={loading}
+              className="bg-success hover:bg-success/80"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reabrir Ticket
             </Button>
           )}
         </div>
