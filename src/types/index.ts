@@ -1,4 +1,3 @@
-
 export type UserRole = "user" | "admin";
 
 export interface User {
@@ -11,7 +10,7 @@ export interface User {
   updatedAt: string;
 }
 
-export type TicketStatus = "new" | "open" | "closed" | "archived";
+export type TicketStatus = "new" | "open" | "closed";
 export type TicketPriority = "low" | "medium" | "high";
 
 export interface Ticket {

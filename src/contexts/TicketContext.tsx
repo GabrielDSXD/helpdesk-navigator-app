@@ -14,9 +14,6 @@ interface TicketContextType {
   addResponse: (ticketId: string, content: string) => Promise<void>;
   closeTicket: (ticketId: string, resolution: string) => Promise<void>;
   reopenTicket: (ticketId: string) => Promise<void>;
-  archiveTicket: (ticketId: string) => Promise<void>;
-  unarchiveTicket: (ticketId: string) => Promise<void>;
-  deleteTicket: (ticketId: string) => Promise<void>;
   fetchTickets: () => Promise<void>;
 }
 
@@ -228,93 +225,6 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Archive a ticket
-  const archiveTicket = async (ticketId: string) => {
-    if (!user) throw new Error('Você precisa estar logado');
-    if (!isAdmin) throw new Error('Apenas administradores podem arquivar tickets');
-    
-    setLoading(true);
-    try {
-      await ticketService.archiveTicket(ticketId);
-      
-      toast({
-        title: "Ticket arquivado",
-        description: `O ticket #${ticketId.substring(0, 5)} foi arquivado com sucesso.`
-      });
-      
-      // Recarregar a página para evitar problemas de cache
-      window.location.reload();
-    } catch (error) {
-      console.error('Error archiving ticket:', error);
-      toast({
-        title: "Erro ao arquivar ticket",
-        description: "Não foi possível arquivar o ticket. Tente novamente.",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Unarchive a ticket
-  const unarchiveTicket = async (ticketId: string) => {
-    if (!user) throw new Error('Você precisa estar logado');
-    if (!isAdmin) throw new Error('Apenas administradores podem desarquivar tickets');
-    
-    setLoading(true);
-    try {
-      await ticketService.unarchiveTicket(ticketId);
-      
-      toast({
-        title: "Ticket desarquivado",
-        description: `O ticket #${ticketId.substring(0, 5)} foi desarquivado com sucesso.`
-      });
-      
-      // Recarregar a página para evitar problemas de cache
-      window.location.reload();
-    } catch (error) {
-      console.error('Error unarchiving ticket:', error);
-      toast({
-        title: "Erro ao desarquivar ticket",
-        description: "Não foi possível desarquivar o ticket. Tente novamente.",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Delete a ticket
-  const deleteTicket = async (ticketId: string) => {
-    if (!user) throw new Error('Você precisa estar logado');
-    if (!isAdmin) throw new Error('Apenas administradores podem excluir tickets');
-    
-    setLoading(true);
-    try {
-      await ticketService.deleteTicket(ticketId);
-      
-      toast({
-        title: "Ticket excluído",
-        description: `O ticket #${ticketId.substring(0, 5)} foi excluído com sucesso.`
-      });
-      
-      // Navegar de volta para a lista de tickets
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Error deleting ticket:', error);
-      toast({
-        title: "Erro ao excluir ticket",
-        description: "Não foi possível excluir o ticket. Tente novamente.",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <TicketContext.Provider
       value={{
@@ -326,9 +236,6 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         addResponse,
         closeTicket,
         reopenTicket,
-        archiveTicket,
-        unarchiveTicket,
-        deleteTicket,
         fetchTickets
       }}
     >

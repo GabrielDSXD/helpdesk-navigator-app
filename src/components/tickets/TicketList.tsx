@@ -60,8 +60,6 @@ const TicketList: React.FC = () => {
         return <Badge className="bg-ticket-open">Aberto</Badge>;
       case "closed":
         return <Badge className="bg-ticket-closed">Fechado</Badge>;
-      case "archived":
-        return <Badge className="bg-gray-500">Arquivado</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
     }
