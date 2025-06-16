@@ -84,36 +84,42 @@ const TicketDetail: React.FC = () => {
 
       // Load messages for this ticket
       if (currentTicket) {
-        const ticketMessages = await messageService.getTicketMessages(id);
-        setMessages(ticketMessages || []);
+        try {
+          const ticketMessages = await messageService.getTicketMessages(id);
+          // Se não houver mensagens, define como array vazio sem mostrar erro
+          setMessages(ticketMessages || []);
 
-        // Get user details for each message
-        if (ticketMessages && ticketMessages.length > 0) {
-          const userIds = new Set<string>();
-          ticketMessages.forEach((message) => userIds.add(message.userId));
+          // Get user details for each message
+          if (ticketMessages && ticketMessages.length > 0) {
+            const userIds = new Set<string>();
+            ticketMessages.forEach((message) => userIds.add(message.userId));
 
-          // In a real app, you'd fetch user details here
-          // For now, we'll use the data we have
-          const usersMap: Record<string, User> = {};
+            // In a real app, you'd fetch user details here
+            // For now, we'll use the data we have
+            const usersMap: Record<string, User> = {};
 
-          // Add ticket owner
-          if (currentTicket.user) {
-            usersMap[currentTicket.userId] = currentTicket.user;
-          }
-
-          // Add admin if assigned
-          if (currentTicket.assignedTo) {
-            usersMap[currentTicket.adminId!] = currentTicket.assignedTo;
-          }
-
-          // Try to extract user info from message.user if available
-          ticketMessages.forEach((message) => {
-            if (message.user) {
-              usersMap[message.userId] = message.user;
+            // Add ticket owner
+            if (currentTicket.user) {
+              usersMap[currentTicket.userId] = currentTicket.user;
             }
-          });
 
-          setMessageUsers(usersMap);
+            // Add admin if assigned
+            if (currentTicket.assignedTo) {
+              usersMap[currentTicket.adminId!] = currentTicket.assignedTo;
+            }
+
+            // Try to extract user info from message.user if available
+            ticketMessages.forEach((message) => {
+              if (message.user) {
+                usersMap[message.userId] = message.user;
+              }
+            });
+
+            setMessageUsers(usersMap);
+          }
+        } catch (messageError) {
+          console.log("Ticket ainda não possui mensagens");
+          setMessages([]);
         }
       }
     } catch (error) {
@@ -375,7 +381,9 @@ const TicketDetail: React.FC = () => {
 
         {messages.length === 0 ? (
           <div className="text-gray-500 text-center py-10">
-            Ainda não há respostas para este ticket.
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Nenhuma resposta ainda</p>
+            <p className="text-sm">Este ticket ainda não possui respostas. Seja o primeiro a responder!</p>
           </div>
         ) : (
           <div className="space-y-4">
