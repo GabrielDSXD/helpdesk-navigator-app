@@ -164,8 +164,8 @@ const TicketList: React.FC = () => {
 
                   <div className="flex justify-between items-center text-xs text-gray-500">
                     <div>
-                      {ticket.messages_count ? (
-                        <span>{ticket.messages_count} resposta(s)</span>
+                      {ticket.messageCount ? (
+                        <span>{ticket.messageCount} resposta(s)</span>
                       ) : (
                         <span>Sem respostas</span>
                       )}

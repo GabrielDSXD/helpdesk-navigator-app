@@ -19,7 +19,7 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: TicketPriority;
-  messages_count: number;
+  messageCount: number;
   userId: string;
   adminId?: string;
   createdAt: string;
