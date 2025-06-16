@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw } from "lucide-react";
 import { messageService } from "@/services/messageService";
 import { ticketService } from "@/services/ticketService";
-import { TicketResponse, User } from "@/types";
+import { TicketResponse, User, Ticket } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
@@ -46,9 +46,9 @@ const TicketDetail: React.FC = () => {
   const [responseContent, setResponseContent] = useState("");
   const [resolution, setResolution] = useState("");
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
-  const [ticket, setTicket] = useState(getTicketById(id || ""));
+  const [ticket, setTicket] = useState<Ticket | undefined>(undefined);
   const [messages, setMessages] = useState<TicketResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [messageUsers, setMessageUsers] = useState<Record<string, User>>({});
   const [refreshing, setRefreshing] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -78,16 +78,27 @@ const TicketDetail: React.FC = () => {
     }
 
     try {
-      // Refresh tickets first to get latest data
-      await fetchTickets();
-      const currentTicket = getTicketById(id);
+      // First try to get ticket from context
+      let currentTicket = getTicketById(id);
+      
+      // If not found in context, fetch directly from API (handles page refresh)
+      if (!currentTicket) {
+        try {
+          currentTicket = await ticketService.getTicketById(id);
+        } catch (error) {
+          console.error("Failed to load ticket from API:", error);
+          toast.error("Ticket não encontrado");
+          navigate("/");
+          return;
+        }
+      }
+      
       setTicket(currentTicket);
 
       // Load messages for this ticket
       if (currentTicket) {
         try {
           const ticketMessages = await messageService.getTicketMessages(id);
-          // Se não houver mensagens, define como array vazio sem mostrar erro
           setMessages(ticketMessages || []);
 
           // Get user details for each message
@@ -95,8 +106,6 @@ const TicketDetail: React.FC = () => {
             const userIds = new Set<string>();
             ticketMessages.forEach((message) => userIds.add(message.userId));
 
-            // In a real app, you'd fetch user details here
-            // For now, we'll use the data we have
             const usersMap: Record<string, User> = {};
 
             // Add ticket owner
