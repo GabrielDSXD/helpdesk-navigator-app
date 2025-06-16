@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useTickets } from "@/contexts/TicketContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -6,17 +6,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { TicketStatus, TicketPriority } from "@/types";
+import TicketFilters from "./TicketFilters";
 
 const TicketList: React.FC = () => {
   const { tickets, fetchTickets, loading } = useTickets();
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
+  // Estados dos filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
+  const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
+
   useEffect(() => {
     if (user) {
       fetchTickets();
     }
   }, [user]);
+
+  // Função para limpar todos os filtros
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setDateFromFilter(undefined);
+    setDateToFilter(undefined);
+  };
+
+  // Filtrar tickets baseado nos filtros aplicados
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((ticket) => {
+      // Filtro por título
+      const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Filtro por status
+      const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+
+      // Filtro por data
+      const ticketDate = new Date(ticket.createdAt);
+      const matchesDateFrom = !dateFromFilter || ticketDate >= dateFromFilter;
+      const matchesDateTo = !dateToFilter || ticketDate <= dateToFilter;
+
+      return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
+    });
+  }, [tickets, searchTerm, statusFilter, dateFromFilter, dateToFilter]);
 
   // Função para exibir o status do ticket
   const renderStatusBadge = (status: string) => {
@@ -78,16 +111,36 @@ const TicketList: React.FC = () => {
         <Button onClick={() => navigate("/new-ticket")}>Novo Ticket</Button>
       </div>
 
-      {tickets.length === 0 ? (
+      {/* Componente de Filtros */}
+      <TicketFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        dateFromFilter={dateFromFilter}
+        onDateFromFilterChange={setDateFromFilter}
+        dateToFilter={dateToFilter}
+        onDateToFilterChange={setDateToFilter}
+        onClearFilters={handleClearFilters}
+      />
+
+      {filteredTickets.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-lg text-gray-500">Não há tickets para exibir</p>
-          <Button onClick={() => navigate("/new-ticket")} className="mt-4">
-            Criar novo ticket
-          </Button>
+          <p className="text-lg text-gray-500">
+            {tickets.length === 0 
+              ? "Não há tickets para exibir" 
+              : "Nenhum ticket encontrado com os filtros aplicados"
+            }
+          </p>
+          {tickets.length === 0 && (
+            <Button onClick={() => navigate("/new-ticket")} className="mt-4">
+              Criar novo ticket
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {tickets.map((ticket) => (
+          {filteredTickets.map((ticket) => (
             <Card
               key={ticket.id}
               className="overflow-hidden hover:shadow-md transition-shadow"
@@ -135,6 +188,13 @@ const TicketList: React.FC = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Mostrar contadores */}
+      {(searchTerm || statusFilter !== "all" || dateFromFilter || dateToFilter) && (
+        <div className="text-sm text-gray-500 text-center mt-4">
+          Mostrando {filteredTickets.length} de {tickets.length} tickets
         </div>
       )}
     </div>
