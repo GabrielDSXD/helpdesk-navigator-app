@@ -51,6 +51,20 @@ export const ticketService = {
     return response.data.ticket;
   },
   
+  archiveTicket: async (id: string) => {
+    const response = await api.patch(`/tickets/${id}/status`, {
+      status: 'archived'
+    });
+    return response.data.ticket;
+  },
+  
+  unarchiveTicket: async (id: string) => {
+    const response = await api.patch(`/tickets/${id}/status`, {
+      status: 'open'
+    });
+    return response.data.ticket;
+  },
+  
   deleteTicket: async (id: string) => {
     const response = await api.delete(`/tickets/${id}/delete`);
     return response.data;
