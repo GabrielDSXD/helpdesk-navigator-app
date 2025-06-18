@@ -58,8 +58,19 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         fetchedTickets = await ticketService.getUserTickets();
       }
       
-      // Transform tickets to match our frontend model if needed
-      setTickets(fetchedTickets || []);
+      console.log('Raw fetched tickets:', fetchedTickets);
+      
+      // Better handling of empty or null responses
+      if (!fetchedTickets) {
+        console.log('No tickets data received, setting empty array');
+        setTickets([]);
+      } else if (Array.isArray(fetchedTickets)) {
+        console.log('Tickets is array, setting directly:', fetchedTickets.length);
+        setTickets(fetchedTickets);
+      } else {
+        console.log('Tickets data received but not array, setting empty array');
+        setTickets([]);
+      }
     } catch (error) {
       console.error('Error fetching tickets:', error);
       toast({
@@ -67,7 +78,7 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Não foi possível carregar os tickets. Tente novamente.",
         variant: "destructive"
       });
-      // Set empty array in case of error to avoid undefined issues
+      // Always set empty array in case of error to avoid undefined issues
       setTickets([]);
     } finally {
       setLoading(false);
