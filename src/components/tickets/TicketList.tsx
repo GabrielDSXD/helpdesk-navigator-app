@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from "react";
 import { useTickets } from "@/contexts/TicketContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,9 +8,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { TicketStatus, TicketPriority } from "@/types";
 import TicketFilters from "./TicketFilters";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Archive, Trash } from "lucide-react";
 
 const TicketList: React.FC = () => {
-  const { tickets, fetchTickets, loading } = useTickets();
+  const { tickets, fetchTickets, loading, archiveTicket, unarchiveTicket, deleteTicket } = useTickets();
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
@@ -35,12 +48,20 @@ const TicketList: React.FC = () => {
 
   // Filtrar tickets baseado nos filtros aplicados
   const filteredTickets = useMemo(() => {
+    if (!tickets || tickets.length === 0) return [];
+    
     return tickets.filter((ticket) => {
       // Filtro por título
       const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Filtro por status
-      const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+      // Filtro por status - tickets arquivados só aparecem quando filtrado especificamente
+      let matchesStatus = true;
+      if (statusFilter === "all") {
+        // Por padrão, não mostrar tickets arquivados
+        matchesStatus = ticket.status !== "archived";
+      } else {
+        matchesStatus = ticket.status === statusFilter;
+      }
 
       // Filtro por data
       const ticketDate = new Date(ticket.createdAt);
@@ -60,6 +81,8 @@ const TicketList: React.FC = () => {
         return <Badge className="bg-ticket-open">Aberto</Badge>;
       case "closed":
         return <Badge className="bg-ticket-closed">Fechado</Badge>;
+      case "archived":
+        return <Badge className="bg-gray-500">Arquivado</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
     }
@@ -91,6 +114,30 @@ const TicketList: React.FC = () => {
         );
       default:
         return <Badge variant="outline">Desconhecida</Badge>;
+    }
+  };
+
+  const handleArchiveTicket = async (ticketId: string) => {
+    try {
+      await archiveTicket(ticketId);
+    } catch (error) {
+      console.error("Erro ao arquivar ticket:", error);
+    }
+  };
+
+  const handleUnarchiveTicket = async (ticketId: string) => {
+    try {
+      await unarchiveTicket(ticketId);
+    } catch (error) {
+      console.error("Erro ao desarquivar ticket:", error);
+    }
+  };
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    try {
+      await deleteTicket(ticketId);
+    } catch (error) {
+      console.error("Erro ao deletar ticket:", error);
     }
   };
 
@@ -127,12 +174,12 @@ const TicketList: React.FC = () => {
       {filteredTickets.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-lg text-gray-500">
-            {tickets.length === 0 
+            {!tickets || tickets.length === 0 
               ? "Não há tickets para exibir" 
               : "Nenhum ticket encontrado com os filtros aplicados"
             }
           </p>
-          {tickets.length === 0 && (
+          {(!tickets || tickets.length === 0) && (
             <Button onClick={() => navigate("/new-ticket")} className="mt-4">
               Criar novo ticket
             </Button>
@@ -185,6 +232,70 @@ const TicketList: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {isAdmin && (
+                  <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
+                    {ticket.status === "archived" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUnarchiveTicket(ticket.id);
+                        }}
+                        disabled={loading}
+                      >
+                        <Archive className="h-4 w-4 mr-1" />
+                        Desarquivar
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleArchiveTicket(ticket.id);
+                        }}
+                        disabled={loading}
+                      >
+                        <Archive className="h-4 w-4 mr-1" />
+                        Arquivar
+                      </Button>
+                    )}
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={loading}
+                        >
+                          <Trash className="h-4 w-4 mr-1" />
+                          Deletar
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja deletar o ticket "{ticket.title}"? 
+                            Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteTicket(ticket.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Deletar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -194,7 +305,7 @@ const TicketList: React.FC = () => {
       {/* Mostrar contadores */}
       {(searchTerm || statusFilter !== "all" || dateFromFilter || dateToFilter) && (
         <div className="text-sm text-gray-500 text-center mt-4">
-          Mostrando {filteredTickets.length} de {tickets.length} tickets
+          Mostrando {filteredTickets.length} de {tickets ? tickets.length : 0} tickets
         </div>
       )}
     </div>

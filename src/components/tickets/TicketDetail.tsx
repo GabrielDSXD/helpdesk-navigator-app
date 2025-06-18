@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTickets } from "@/contexts/TicketContext";
@@ -20,8 +21,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw } from "lucide-react";
+import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw, Archive, Trash } from "lucide-react";
 import { messageService } from "@/services/messageService";
 import { ticketService } from "@/services/ticketService";
 import { TicketResponse, User, Ticket } from "@/types";
@@ -36,6 +48,9 @@ const TicketDetail: React.FC = () => {
     addResponse,
     closeTicket,
     reopenTicket,
+    archiveTicket,
+    unarchiveTicket,
+    deleteTicket,
     loading,
     fetchTickets,
   } = useTickets();
@@ -181,6 +196,13 @@ const TicketDetail: React.FC = () => {
   // Verificar se um admin pode assumir o ticket
   const canAssign = isAdmin && ticket.status === "new";
 
+  // Verificar se admin pode arquivar/desarquivar
+  const canArchive = isAdmin && ticket.status !== "archived";
+  const canUnarchive = isAdmin && ticket.status === "archived";
+
+  // Verificar se admin pode deletar
+  const canDelete = isAdmin;
+
   // Função para renderizar o badge de status
   const renderStatusBadge = (status: string) => {
     switch (status) {
@@ -190,6 +212,8 @@ const TicketDetail: React.FC = () => {
         return <Badge className="bg-ticket-open">Aberto</Badge>;
       case "closed":
         return <Badge className="bg-ticket-closed">Fechado</Badge>;
+      case "archived":
+        return <Badge className="bg-gray-500">Arquivado</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
     }
@@ -297,6 +321,29 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  // Manipuladores para arquivar e desarquivar
+  const handleArchiveTicket = async () => {
+    if (canArchive && id) {
+      await archiveTicket(id);
+      navigate("/");
+    }
+  };
+
+  const handleUnarchiveTicket = async () => {
+    if (canUnarchive && id) {
+      await unarchiveTicket(id);
+      navigate("/");
+    }
+  };
+
+  // Manipulador para deletar ticket
+  const handleDeleteTicket = async () => {
+    if (canDelete && id) {
+      await deleteTicket(id);
+      navigate("/");
+    }
+  };
+
   // Função para obter as iniciais do nome do usuário
   const getUserInitials = (userId: string) => {
     const userInfo = messageUsers[userId];
@@ -381,6 +428,60 @@ const TicketDetail: React.FC = () => {
               Reabrir Ticket
             </Button>
           )}
+
+          {canArchive && (
+            <Button
+              variant="outline"
+              onClick={handleArchiveTicket}
+              disabled={loading}
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Arquivar
+            </Button>
+          )}
+
+          {canUnarchive && (
+            <Button
+              variant="outline"
+              onClick={handleUnarchiveTicket}
+              disabled={loading}
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Desarquivar
+            </Button>
+          )}
+
+          {canDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={loading}
+                >
+                  <Trash className="h-4 w-4 mr-2" />
+                  Deletar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja deletar o ticket "{ticket.title}"? 
+                    Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteTicket}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Deletar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
@@ -460,7 +561,7 @@ const TicketDetail: React.FC = () => {
           </div>
         )}
 
-        {ticket.status !== "closed" && canRespond && (
+        {ticket.status !== "closed" && ticket.status !== "archived" && canRespond && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-lg">Adicionar Resposta</CardTitle>

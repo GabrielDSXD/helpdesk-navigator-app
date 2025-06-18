@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Ticket, TicketStatus, TicketPriority, User, TicketResponse } from '@/types';
 import { useAuth } from './AuthContext';
@@ -14,6 +15,9 @@ interface TicketContextType {
   addResponse: (ticketId: string, content: string) => Promise<void>;
   closeTicket: (ticketId: string, resolution: string) => Promise<void>;
   reopenTicket: (ticketId: string) => Promise<void>;
+  archiveTicket: (ticketId: string) => Promise<void>;
+  unarchiveTicket: (ticketId: string) => Promise<void>;
+  deleteTicket: (ticketId: string) => Promise<void>;
   fetchTickets: () => Promise<void>;
 }
 
@@ -63,6 +67,8 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Não foi possível carregar os tickets. Tente novamente.",
         variant: "destructive"
       });
+      // Set empty array in case of error to avoid undefined issues
+      setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -225,6 +231,90 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Archive a ticket
+  const archiveTicket = async (ticketId: string) => {
+    if (!user) throw new Error('Você precisa estar logado');
+    if (!isAdmin) throw new Error('Apenas administradores podem arquivar tickets');
+    
+    setLoading(true);
+    try {
+      await ticketService.archiveTicket(ticketId);
+      
+      toast({
+        title: "Ticket arquivado",
+        description: `O ticket #${ticketId.substring(0, 5)} foi arquivado com sucesso.`
+      });
+      
+      await fetchTickets();
+    } catch (error) {
+      console.error('Error archiving ticket:', error);
+      toast({
+        title: "Erro ao arquivar ticket",
+        description: "Não foi possível arquivar o ticket. Tente novamente.",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Unarchive a ticket
+  const unarchiveTicket = async (ticketId: string) => {
+    if (!user) throw new Error('Você precisa estar logado');
+    if (!isAdmin) throw new Error('Apenas administradores podem desarquivar tickets');
+    
+    setLoading(true);
+    try {
+      await ticketService.unarchiveTicket(ticketId);
+      
+      toast({
+        title: "Ticket desarquivado",
+        description: `O ticket #${ticketId.substring(0, 5)} foi desarquivado com sucesso.`
+      });
+      
+      await fetchTickets();
+    } catch (error) {
+      console.error('Error unarchiving ticket:', error);
+      toast({
+        title: "Erro ao desarquivar ticket",
+        description: "Não foi possível desarquivar o ticket. Tente novamente.",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete a ticket
+  const deleteTicket = async (ticketId: string) => {
+    if (!user) throw new Error('Você precisa estar logado');
+    if (!isAdmin) throw new Error('Apenas administradores podem deletar tickets');
+    
+    setLoading(true);
+    try {
+      await ticketService.deleteTicket(ticketId);
+      
+      toast({
+        title: "Ticket deletado",
+        description: `O ticket #${ticketId.substring(0, 5)} foi deletado com sucesso.`
+      });
+      
+      await fetchTickets();
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+      toast({
+        title: "Erro ao deletar ticket",
+        description: "Não foi possível deletar o ticket. Tente novamente.",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <TicketContext.Provider
       value={{
@@ -236,6 +326,9 @@ export const TicketProvider = ({ children }: { children: React.ReactNode }) => {
         addResponse,
         closeTicket,
         reopenTicket,
+        archiveTicket,
+        unarchiveTicket,
+        deleteTicket,
         fetchTickets
       }}
     >

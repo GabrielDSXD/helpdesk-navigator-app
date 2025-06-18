@@ -21,12 +21,12 @@ export const ticketService = {
   
   getUserTickets: async () => {
     const response = await api.get('/tickets/me');
-    return response.data.tickets;
+    return response.data.tickets || [];
   },
   
   getAllTickets: async () => {
     const response = await api.get('/tickets');
-    return response.data.tickets_list;
+    return response.data.tickets_list || [];
   },
   
   getTicketById: async (id: string) => {
@@ -45,6 +45,20 @@ export const ticketService = {
   },
   
   reopenTicket: async (id: string) => {
+    const response = await api.patch(`/tickets/${id}/status`, {
+      status: 'open'
+    });
+    return response.data.ticket;
+  },
+  
+  archiveTicket: async (id: string) => {
+    const response = await api.patch(`/tickets/${id}/status`, {
+      status: 'archived'
+    });
+    return response.data.ticket;
+  },
+  
+  unarchiveTicket: async (id: string) => {
     const response = await api.patch(`/tickets/${id}/status`, {
       status: 'open'
     });

@@ -1,11 +1,10 @@
 
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Search, X } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -33,104 +32,88 @@ const TicketFilters: React.FC<TicketFiltersProps> = ({
   onClearFilters,
 }) => {
   return (
-    <div className="space-y-4 mb-6">
-      {/* Barra de pesquisa */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="Pesquisar por título do ticket..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* Filtro por Status */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium">Status</label>
-          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Todos os status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="new">Novo</SelectItem>
-              <SelectItem value="open">Aberto</SelectItem>
-              <SelectItem value="closed">Fechado</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="bg-white p-4 rounded-lg border shadow-sm space-y-4">
+      <div className="flex flex-wrap gap-4">
+        {/* Barra de pesquisa */}
+        <div className="flex-1 min-w-64">
+          <Input
+            placeholder="Pesquisar por título..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full"
+          />
         </div>
 
-        {/* Filtro por Data De */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium">Data de</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[180px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFromFilter ? (
-                  format(dateFromFilter, "dd/MM/yyyy", { locale: ptBR })
-                ) : (
-                  <span>Selecionar data</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dateFromFilter}
-                onSelect={onDateFromFilterChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Filtro por Data Até */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium">Data até</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[180px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateToFilter ? (
-                  format(dateToFilter, "dd/MM/yyyy", { locale: ptBR })
-                ) : (
-                  <span>Selecionar data</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dateToFilter}
-                onSelect={onDateToFilterChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Botão Limpar Filtros */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium opacity-0">Ações</label>
-          <Button
-            variant="outline"
-            onClick={onClearFilters}
-            className="flex items-center gap-2"
+        {/* Filtro por status */}
+        <div className="min-w-48">
+          <select
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <X className="h-4 w-4" />
-            Limpar filtros
-          </Button>
+            <option value="all">Todos os status</option>
+            <option value="new">Novo</option>
+            <option value="open">Aberto</option>
+            <option value="closed">Fechado</option>
+            <option value="archived">Arquivado</option>
+          </select>
         </div>
+
+        {/* Data inicial */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="min-w-48 justify-start text-left font-normal"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateFromFilter ? (
+                format(dateFromFilter, "dd/MM/yyyy", { locale: ptBR })
+              ) : (
+                "Data inicial"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={dateFromFilter}
+              onSelect={onDateFromFilterChange}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* Data final */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="min-w-48 justify-start text-left font-normal"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateToFilter ? (
+                format(dateToFilter, "dd/MM/yyyy", { locale: ptBR })
+              ) : (
+                "Data final"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={dateToFilter}
+              onSelect={onDateToFilterChange}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* Botão para limpar filtros */}
+        <Button variant="outline" onClick={onClearFilters}>
+          <X className="mr-2 h-4 w-4" />
+          Limpar Filtros
+        </Button>
       </div>
     </div>
   );
