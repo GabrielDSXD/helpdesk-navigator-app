@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTickets } from "@/contexts/TicketContext";
@@ -290,6 +289,14 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  // Novo manipulador para eventos de teclado na textarea
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddResponse();
+    }
+  };
+
   // Manipulador para fechar ticket
   const handleCloseTicket = async () => {
     if (resolution.trim() && canClose && id) {
@@ -570,7 +577,8 @@ const TicketDetail: React.FC = () => {
               <Textarea
                 value={responseContent}
                 onChange={(e) => setResponseContent(e.target.value)}
-                placeholder="Digite sua resposta..."
+                onKeyDown={handleKeyDown}
+                placeholder="Digite sua resposta... (Enter para enviar, Shift+Enter para quebrar linha)"
                 rows={4}
               />
             </CardContent>
