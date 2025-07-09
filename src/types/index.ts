@@ -38,6 +38,7 @@ export interface TicketResponse {
   createdAt: string;
   updatedAt: string;
   user?: User;
+  fileUrl?: string;
 }
 
 export interface Notification {
