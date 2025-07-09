@@ -594,7 +594,7 @@ const TicketDetail: React.FC = () => {
                             <img
                               src={message.fileUrl}
                               alt="Arquivo anexado"
-                              className="rounded-lg border max-w-full h-auto cursor-pointer"
+                              className="rounded-lg border max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
                               onClick={() => window.open(message.fileUrl, '_blank')}
                             />
                           </div>
