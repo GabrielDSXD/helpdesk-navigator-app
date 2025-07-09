@@ -64,6 +64,7 @@ const TicketDetail: React.FC = () => {
   const [ticket, setTicket] = useState<Ticket | undefined>(undefined);
   const [messages, setMessages] = useState<TicketResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSendingResponse, setIsSendingResponse] = useState(false); // Novo estado
   const [messageUsers, setMessageUsers] = useState<Record<string, User>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -267,16 +268,15 @@ const TicketDetail: React.FC = () => {
   // Manipulador para adicionar resposta
   const handleAddResponse = async () => {
     if (responseContent.trim() && canRespond && id) {
+      setIsSendingResponse(true); // Bloqueia o botão
       try {
         if (selectedFile) {
-          // Use the new service method for file uploads
           await messageService.createMessageWithFile({ 
             ticketId: id, 
             content: responseContent,
             file: selectedFile
           });
         } else {
-          // Use the existing method for text-only messages
           await addResponse(id, responseContent);
         }
         
@@ -304,6 +304,8 @@ const TicketDetail: React.FC = () => {
       } catch (error) {
         console.error('Error sending message:', error);
         toast.error('Erro ao enviar mensagem. Tente novamente.');
+      } finally {
+        setIsSendingResponse(false); // Libera o botão
       }
     }
   };
@@ -641,15 +643,15 @@ const TicketDetail: React.FC = () => {
                 selectedFile={selectedFile}
               />
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                onClick={handleAddResponse}
-                disabled={loading || (!responseContent.trim() && !selectedFile)}
-                className="bg-primary hover:bg-primary/80"
-              >
-                Enviar Resposta
-              </Button>
-            </CardFooter>
+              <CardFooter className="flex justify-end">
+                <Button
+                  onClick={handleAddResponse}
+                  disabled={isSendingResponse || loading || (!responseContent.trim() && !selectedFile)} // Atualize esta linha
+                  className="bg-primary hover:bg-primary/80"
+                >
+                  {isSendingResponse ? "Enviando..." : "Enviar Resposta"} {/* Opcional: Mude o texto durante o envio */}
+                </Button>
+              </CardFooter>
           </Card>
         )}
       </div>
