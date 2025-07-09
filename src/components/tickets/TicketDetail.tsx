@@ -32,7 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw, Archive, Trash } from "lucide-react";
+import { ArrowLeft, MessageSquare, Check, X, RefreshCw, RotateCcw, Archive, Trash, ImageIcon } from "lucide-react";
 import { messageService } from "@/services/messageService";
 import { ticketService } from "@/services/ticketService";
 import { TicketResponse, User, Ticket } from "@/types";
@@ -401,6 +401,11 @@ const TicketDetail: React.FC = () => {
     return userId === ticket.userId ? "user" : "admin";
   };
 
+  // Função para verificar se o arquivo é uma imagem
+  const isImageFile = (fileUrl: string) => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUrl);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -578,9 +583,37 @@ const TicketDetail: React.FC = () => {
                       {new Date(message.createdAt).toLocaleString("pt-BR")}
                     </span>
                   </div>
-                  <p className="flex flex-row mt-2 whitespace-pre-wrap pl-0 text-wrap">
-                    {message.content}
-                  </p>
+                  <div className="mt-2">
+                    <p className="whitespace-pre-wrap text-wrap">
+                      {message.content}
+                    </p>
+                    {message.fileUrl && (
+                      <div className="mt-3">
+                        {isImageFile(message.fileUrl) ? (
+                          <div className="max-w-md">
+                            <img
+                              src={message.fileUrl}
+                              alt="Arquivo anexado"
+                              className="rounded-lg border max-w-full h-auto cursor-pointer"
+                              onClick={() => window.open(message.fileUrl, '_blank')}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 p-3 border rounded-lg bg-gray-50 max-w-md">
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                            <a
+                              href={message.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              Ver arquivo anexado
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
