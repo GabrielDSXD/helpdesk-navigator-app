@@ -38,6 +38,7 @@ import { ticketService } from "@/services/ticketService";
 import { TicketResponse, User, Ticket } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import FileUpload from './FileUpload';
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,6 +66,7 @@ const TicketDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [messageUsers, setMessageUsers] = useState<Record<string, User>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -265,27 +267,44 @@ const TicketDetail: React.FC = () => {
   // Manipulador para adicionar resposta
   const handleAddResponse = async () => {
     if (responseContent.trim() && canRespond && id) {
-      await addResponse(id, responseContent);
-      setResponseContent("");
+      try {
+        if (selectedFile) {
+          // Use the new service method for file uploads
+          await messageService.createMessageWithFile({ 
+            ticketId: id, 
+            content: responseContent,
+            file: selectedFile
+          });
+        } else {
+          // Use the existing method for text-only messages
+          await addResponse(id, responseContent);
+        }
+        
+        setResponseContent("");
+        setSelectedFile(null);
 
-      // Adicionar notificação se for um administrador respondendo ao usuário
-      if (isAdmin && ticket.userId !== user?.id) {
-        addNotification(
-          `Nova resposta no seu ticket "${ticket.title}"`,
-          ticket.id
-        );
+        // Adicionar notificação se for um administrador respondendo ao usuário
+        if (isAdmin && ticket.userId !== user?.id) {
+          addNotification(
+            `Nova resposta no seu ticket "${ticket.title}"`,
+            ticket.id
+          );
+        }
+
+        // Adicionar notificação se for usuário respondendo (para administradores)
+        if (!isAdmin && ticket.adminId) {
+          addNotification(
+            `Nova resposta do usuário no ticket "${ticket.title}"`,
+            ticket.id
+          );
+        }
+
+        // Recarregar mensagens após adicionar resposta
+        loadTicketAndMessages();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        toast.error('Erro ao enviar mensagem. Tente novamente.');
       }
-
-      // Adicionar notificação se for usuário respondendo (para administradores)
-      if (!isAdmin && ticket.adminId) {
-        addNotification(
-          `Nova resposta do usuário no ticket "${ticket.title}"`,
-          ticket.id
-        );
-      }
-
-      // Recarregar mensagens após adicionar resposta
-      loadTicketAndMessages();
     }
   };
 
@@ -573,7 +592,7 @@ const TicketDetail: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-lg">Adicionar Resposta</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Textarea
                 value={responseContent}
                 onChange={(e) => setResponseContent(e.target.value)}
@@ -581,11 +600,15 @@ const TicketDetail: React.FC = () => {
                 placeholder="Digite sua resposta... (Enter para enviar, Shift+Enter para quebrar linha)"
                 rows={4}
               />
+              <FileUpload
+                onFileSelect={setSelectedFile}
+                selectedFile={selectedFile}
+              />
             </CardContent>
             <CardFooter className="flex justify-end">
               <Button
                 onClick={handleAddResponse}
-                disabled={loading || !responseContent.trim()}
+                disabled={loading || (!responseContent.trim() && !selectedFile)}
                 className="bg-primary hover:bg-primary/80"
               >
                 Enviar Resposta

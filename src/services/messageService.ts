@@ -7,9 +7,32 @@ interface CreateMessageData {
   ticketId: string;
 }
 
+interface CreateMessageWithFileData {
+  content: string;
+  ticketId: string;
+  file?: File;
+}
+
 export const messageService = {
   createMessage: async (messageData: CreateMessageData) => {
     const response = await api.post('/messages', messageData);
+    return response.data;
+  },
+
+  createMessageWithFile: async (messageData: CreateMessageWithFileData) => {
+    const formData = new FormData();
+    formData.append('content', messageData.content);
+    formData.append('ticketId', messageData.ticketId);
+    
+    if (messageData.file) {
+      formData.append('file', messageData.file);
+    }
+
+    const response = await api.post('/messages', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
   
