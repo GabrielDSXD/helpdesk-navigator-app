@@ -525,6 +525,9 @@ const TicketDetail: React.FC = () => {
               {renderPriorityBadge(ticket.priority)}
             </div>
           </div>
+          <div className="text-sm text-gray-500">
+              {ticket.user.name}
+          </div>
           <div className="text-sm text-gray-500 mt-1">
             Criado em {new Date(ticket.createdAt).toLocaleString("pt-BR")}
           </div>

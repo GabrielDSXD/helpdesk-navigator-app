@@ -206,7 +206,7 @@ const TicketList: React.FC = () => {
                   </div>
 
                   <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                    {ticket.description}
+                    {ticket.user.name}
                   </p>
 
                   <div className="flex justify-between items-center text-xs text-gray-500">
